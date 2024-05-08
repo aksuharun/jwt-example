@@ -1,23 +1,22 @@
 import jwt from 'jsonwebtoken'
-import dotenv from 'dotenv'
-
-dotenv.config()
 
 export const authenticateToken = (req, res, next) => {
-	const { token } = req.body
-	
-	if(!token) return res.status(403).json({
+	if(!req.cookies.token) return res.status(403).json({
 		msg: 'No token present'
 	})
-
+	
+	const { token } = req.cookies
 	try{
-		const decode = jwt.decode(token, process.env.ACCES_TOKEN_SECRET)
+		const decode = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET)
 		req.user = decode
 	}catch(err){
+		res.clearCookie('token')
+		
 		return res.status(403).json({
-			msg: 'Invalid token'
+			msg: 'Invalid token',
+			err: err
 		})
-	}
 
+	}
 	next()
 }

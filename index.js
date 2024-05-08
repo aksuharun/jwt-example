@@ -1,19 +1,20 @@
 import express from 'express'
 import dotenv from 'dotenv'
 import jwt from 'jsonwebtoken'
+import cookieParser from 'cookie-parser'
 import { authenticateToken } from './middleware.js'
 
 dotenv.config()
 const app = express()
 
 app.use(express.json())
+app.use(cookieParser())
 
 app.get('/', (req, res) => {
 	res.send('Hello World')
 })
 
-app.get('/home',authenticateToken, (req,  res) => {
-	console.log(req.headers)
+app.get('/home', authenticateToken, (req,  res) => {
 	const { user } = req
 	res.json({msg: `Welcome ${user.username}`,})
 })
@@ -23,12 +24,16 @@ app.post('/login', (req, res) => {
 	
 	if(username == 'admin' && password == 'admin'){
 		const token = jwt.sign(
-			  { username },
+			{ username },
 			process.env.ACCESS_TOKEN_SECRET,
-			{ expiresIn: 3600 }
+			{ expiresIn: 600 } //600s = 10minutes
 		)
+
+		res.cookie('token', token, { httpOnly:true })
+
 		return res.json({username, token, msg: 'Login Success'})
 	}
+
 	return res.json({message: 'Invalid Credentials'})
 })
 
